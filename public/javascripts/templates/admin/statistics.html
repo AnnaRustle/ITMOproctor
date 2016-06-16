@@ -1,0 +1,19 @@
+<script type="text/template" id="main-tpl">
+
+<div id="statistics-toolbar" style="padding-left:5px;">
+    <input name="date-from" class="easyui-datebox date-from" style="width:110px;" data-options="prompt:'<%- i18n.t('admin.statistics.fromDatePrompt') %>'">
+    <input name="date-to" class="easyui-datebox date-to" style="width:110px;" data-options="prompt:'<%- i18n.t('admin.statistics.toDatePrompt') %>'">
+    <span class="easyui-menubutton" data-options="menu:'#statistics-menu'"><%- i18n.t('admin.actions.title') %></span>
+</div>
+<div id="statistics-menu" style="width:150px;">
+    <div name="graph" data-options="iconCls:'fa fa-bar-chart'"><%- i18n.t('admin.actions.graph') %></div>
+</div>
+
+<div id="container" class="easyui-panel" style="width:100%;height:250px;padding:1%;background:#fafafa;">
+</div>
+
+<div id="container" class="easyui-panel" style="width:100%;padding:1%;background:#fafafa;">
+<div id="chart"></div>
+</div>
+
+</script>

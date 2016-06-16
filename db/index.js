@@ -278,6 +278,73 @@ var db = {
             return attach;
         }
     },
+    statistics: {
+        //функция для получения списка экзаменов по дням с учетом статусов
+        search: function(args, callback) {
+            var rows = args.data.rows ? Number(args.data.rows) : 0;
+            var page = args.data.page ? Number(args.data.page) - 1 : 0;
+            var fromDate = args.data.from ? moment(args.data.from) : null;
+            var toDate = args.data.to ? moment(args.data.to) : null;
+            var now = moment();
+            var Exam = require('./models/exam');
+            var query = {};
+            query = {
+                '$and': [{
+                        beginDate: {
+                            '$lt': toDate
+                        }
+                    }, {
+                        endDate: {
+                            '$gt': fromDate
+                        }
+                    }]
+            };
+            Exam.count(query, function(err, count) {
+                if (err) return callback(err);
+                //находим все экзамены, которые попадают в указанный период
+                Exam.find(query).skip(rows * page).limit(rows).exec(function(err, data) {
+                    var exams = [];
+                    //определяем интервал в днях между указанными датами
+                    var days = toDate.diff(fromDate, 'days');
+                    var date1 = fromDate.add(1, 'days');
+                    for (var i = 1; i <= days; i++) {
+                        //в соответствии с датой выбираем экзамены
+                        var total = data.filter(function(exam) {
+                            return moment(exam.beginDate).isSame(date1, 'day');
+                        });
+                        var accepted = 0;
+                        var interrupted = 0;
+                        var planned = 0;
+                        var skipped = 0;
+                        //считаем количество экзаменов по статусам
+                        total.filter(function(exam) {
+                            if (exam.resolution == true) {
+                                accepted++;
+                            } else if (exam.resolution == false) {
+                                interrupted++;
+                            } else if (exam.beginDate > now) {
+                                planned++;
+                            } else if (exam.rightDate <= now || exam.endDate <= now) {
+                                skipped++;
+                            }
+                        });
+                        //формируем объект статистики, добавляем в массив объектов
+                        var statistics = {
+                            date: i,
+                            planned: planned,
+                            accepted: accepted,
+                            interrupted: interrupted,
+                            skipped: skipped,
+                            total: total.length
+                        };
+                        exams.push(statistics);
+                        date1 = date1.add(1, 'days');
+                    }
+                    callback(err, exams, count);
+                });
+            });
+        }
+    },
     exam: {
         list: function(args, callback) {
             var Exam = require('./models/exam');
@@ -480,6 +547,7 @@ var db = {
             });
         },
         schedule: function(args, callback) {
+            console.log(args);
             var Exam = require('./models/exam');
             var Schedule = require('./models/schedule');
             var interval = Number(config.get('schedule:interval'));
